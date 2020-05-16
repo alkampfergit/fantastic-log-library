@@ -8,7 +8,7 @@ trigger:
      - release/*
 
 pool:
-  vmImage: 'windows-2019'
+  name: 'Default'
 
 steps:
 
@@ -19,7 +19,26 @@ steps:
     performMultiLevelLookup: true
 
 - task: PowerShell@2
-  displayName: "Execute powershell to Run Gitversion "
+  displayName: "Running Gitversion to determine version for SonarCloud"
+  inputs:
+    targetType: inline
+    script: |
+      dotnet tool restore
+      $version = dotnet tool run dotnet-gitversion /config GitVersion.yml | Out-String | ConvertFrom-Json
+      $assemblyVer = $version.AssemblySemVer
+      Write-Host "Assembly semver is $assemblyVer"
+      Write-Host "##vso[task.setvariable variable=assemblyVer;]$assemblyVer"
+
+- task: SonarCloudPrepare@1
+  inputs:
+    SonarCloud: 'Sonar Cloud GitHub Gian Maria'
+    organization: 'alkampfergit-github'
+    scannerMode: 'MSBuild'
+    projectKey: 'FantasticLogLibrary'
+    projectName: 'FantasticLogLibrary'
+    projectVersion: '$(assemblyVer)'
+- task: PowerShell@2
+  displayName: "Execute powershell to Run the build"
   inputs:
     targetType: filePath
     filePath: $(Build.SourcesDirectory)/build.ps1
@@ -35,6 +54,12 @@ steps:
     testRunTitle: RunTests
     testResultsFiles: '**/TEST-*.trx'
     
+- task: SonarCloudAnalyze@1
+
+- task: SonarCloudPublish@1
+  inputs:
+    pollingTimeoutSec: '300'
+
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: Artifacts'
   inputs:
