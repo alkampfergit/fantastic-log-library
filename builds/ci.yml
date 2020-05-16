@@ -1,0 +1,71 @@
+trigger:
+ branches:
+   include:
+     - master
+     - develop
+     - feature/*
+     - hotfix/*
+     - release/*
+
+pool:
+  name: 'Default'
+
+steps:
+
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk 3.1.201'
+  inputs:
+    version: 3.1.201
+    performMultiLevelLookup: true
+
+- task: PowerShell@2
+  displayName: "Running Gitversion to determine version for SonarCloud"
+  inputs:
+    targetType: inline
+    script: |
+      dotnet tool restore
+      $version = dotnet tool run dotnet-gitversion /config GitVersion.yml | Out-String | ConvertFrom-Json
+      $assemblyVer = $version.AssemblySemVer
+      Write-Host "Assembly semver is $assemblyVer"
+      Write-Host "##vso[task.setvariable variable=assemblyVer;]$assemblyVer"
+
+- task: SonarCloudPrepare@1
+  inputs:
+    SonarCloud: 'Sonar Cloud GitHub Gian Maria'
+    organization: 'alkampfergit-github'
+    scannerMode: 'MSBuild'
+    projectKey: 'FantasticLogLibrary'
+    projectName: 'FantasticLogLibrary'
+    projectVersion: '$(assemblyVer)'
+- task: PowerShell@2
+  displayName: "Execute powershell to Run the build"
+  inputs:
+    targetType: filePath
+    filePath: $(Build.SourcesDirectory)/build.ps1
+    workingDirectory: $(Build.SourcesDirectory)
+    arguments: -outFolder $(Build.ArtifactStagingDirectory) -configuration "release" -pipelineName FantasticLogLibraryCi
+    failOnStderr: true
+
+- task: PublishTestResults@2
+  displayName: 'Publishing test results'
+  inputs:
+    searchFolder: $(Build.ArtifactStagingDirectory)
+    testResultsFormat: VSTest
+    testRunTitle: RunTests
+    testResultsFiles: '**/TEST-*.trx'
+    
+- task: SonarCloudAnalyze@1
+
+- task: SonarCloudPublish@1
+  inputs:
+    pollingTimeoutSec: '300'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Artifacts'
+  inputs:
+    ArtifactName: Artifacts
+
+
+
+
+
