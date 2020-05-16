@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantasticLogLibrary", "FantasticLogLibrary\FantasticLogLibrary.csproj", "{B7EE5DE8-5EF7-42FD-9D0B-A6565559B5D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FantasticLogLibrary.Tests", "FantasticLogLibrary.Tests\FantasticLogLibrary.Tests.csproj", "{89C78727-0BF6-48FE-9757-1890298DD856}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantasticLogLibrary.Tests", "FantasticLogLibrary.Tests\FantasticLogLibrary.Tests.csproj", "{89C78727-0BF6-48FE-9757-1890298DD856}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FantasticLogLibrary.FileDestination", "FantasticLogLibrary.FileDestination\FantasticLogLibrary.FileDestination.csproj", "{67A4360C-7862-4F19-B982-3C88EF9C50D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{89C78727-0BF6-48FE-9757-1890298DD856}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89C78727-0BF6-48FE-9757-1890298DD856}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89C78727-0BF6-48FE-9757-1890298DD856}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67A4360C-7862-4F19-B982-3C88EF9C50D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67A4360C-7862-4F19-B982-3C88EF9C50D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67A4360C-7862-4F19-B982-3C88EF9C50D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67A4360C-7862-4F19-B982-3C88EF9C50D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

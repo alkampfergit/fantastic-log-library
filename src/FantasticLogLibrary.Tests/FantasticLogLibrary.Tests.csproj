@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FantasticLogLibrary.FileDestination\FantasticLogLibrary.FileDestination.csproj" />
     <ProjectReference Include="..\FantasticLogLibrary\FantasticLogLibrary.csproj" />
   </ItemGroup>
 
