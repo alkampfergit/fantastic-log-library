@@ -1,0 +1,46 @@
+trigger:
+ branches:
+   include:
+     - master
+     - develop
+     - feature/*
+     - hotfix/*
+     - release/*
+
+pool:
+  vmImage: 'windows-2019'
+
+steps:
+
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk 3.1.201'
+  inputs:
+    version: 3.1.201
+    performMultiLevelLookup: true
+
+- task: PowerShell@2
+  displayName: "Execute powershell to Run Gitversion "
+  inputs:
+    targetType: filePath
+    filePath: $(Build.SourcesDirectory)/build.ps1
+    workingDirectory: $(Build.SourcesDirectory)
+    arguments: -outFolder $(Build.ArtifactStagingDirectory) -configuration "release" -pipelineName FantasticLogLibraryCi
+    failOnStderr: true
+
+- task: PublishTestResults@2
+  displayName: 'Publishing test results'
+  inputs:
+    searchFolder: $(Build.ArtifactStagingDirectory)
+    testResultsFormat: VSTest
+    testRunTitle: RunTests
+    testResultsFiles: '**/TEST-*.trx'
+    
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Artifacts'
+  inputs:
+    ArtifactName: Artifacts
+
+
+
+
+
