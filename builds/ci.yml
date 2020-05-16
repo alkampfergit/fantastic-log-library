@@ -37,22 +37,23 @@ steps:
     projectKey: 'FantasticLogLibrary'
     projectName: 'FantasticLogLibrary'
     projectVersion: '$(assemblyVer)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Running tests explicitly with cli task'
+  inputs:
+    command: 'test'
+    projects: 'src/FantasticLogLibrary.Tests/FantasticLogLibrary.Tests.csproj'
+    testRunTitle: 'UnitTests'
+    arguments: '--configuration release --collect "Code coverage"'
+
 - task: PowerShell@2
   displayName: "Execute powershell to Run the build"
   inputs:
     targetType: filePath
     filePath: $(Build.SourcesDirectory)/build.ps1
     workingDirectory: $(Build.SourcesDirectory)
-    arguments: -outFolder $(Build.ArtifactStagingDirectory) -configuration "release" -pipelineName FantasticLogLibraryCi
+    arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration "release" -pipelineName FantasticLogLibraryCi
     failOnStderr: true
-
-- task: PublishTestResults@2
-  displayName: 'Publishing test results'
-  inputs:
-    searchFolder: $(Build.ArtifactStagingDirectory)
-    testResultsFormat: VSTest
-    testRunTitle: RunTests
-    testResultsFiles: '**/TEST-*.trx'
     
 - task: SonarCloudAnalyze@1
 

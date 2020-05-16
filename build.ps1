@@ -67,7 +67,7 @@ if ($skipTests -eq $false)
     foreach ($file in $testProject) 
     {
         Write-Host "Run test for $($file.FullName)"
-        dotnet test $file.FullName --configuration debug --logger "trx;LogFileName=$outFolder/TEST-$file.trx" /p:PackageVersion=$nugetVersion /p:AssemblyVersion=$assemblyVer /p:FileVersion=$assemblyFileVer /p:InformationalVersion=$assemblyInformationalVersion
+        dotnet test $file.FullName --collect "Code Coverage" --configuration debug --logger "trx;LogFileName=$outFolder/TEST-$file.trx" /p:PackageVersion=$nugetVersion /p:AssemblyVersion=$assemblyVer /p:FileVersion=$assemblyFileVer /p:InformationalVersion=$assemblyInformationalVersion
     }
 }
 Write-Host "Now we compile in release to generate correct assemblies"
