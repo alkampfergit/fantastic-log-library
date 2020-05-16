@@ -44,7 +44,7 @@ steps:
     command: 'test'
     projects: 'src/FantasticLogLibrary.Tests/FantasticLogLibrary.Tests.csproj'
     testRunTitle: 'UnitTests'
-    arguments: '--configuration release --collect "Code coverage"'
+    arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
 
 - task: PowerShell@2
   displayName: "Execute powershell to Run the build"
@@ -52,7 +52,7 @@ steps:
     targetType: filePath
     filePath: $(Build.SourcesDirectory)/build.ps1
     workingDirectory: $(Build.SourcesDirectory)
-    arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration "release" -pipelineName FantasticLogLibraryCi
+    arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
     failOnStderr: true
     
 - task: SonarCloudAnalyze@1

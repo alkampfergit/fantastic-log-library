@@ -70,6 +70,6 @@ if ($skipTests -eq $false)
         dotnet test $file.FullName --collect "Code Coverage" --configuration debug --logger "trx;LogFileName=$outFolder/TEST-$file.trx" /p:PackageVersion=$nugetVersion /p:AssemblyVersion=$assemblyVer /p:FileVersion=$assemblyFileVer /p:InformationalVersion=$assemblyInformationalVersion
     }
 }
-Write-Host "Now we compile in release to generate correct assemblies"
+Write-Host "Now we compile in $configuration to generate correct assemblies"
 Write-Host "Versions are: NugetVersion=$nugetVersion\n assemblyVer=$assemblyVer\n assemblyFileVer=$assemblyFileVer\n assemblyInformationalVersion=$assemblyInformationalVersion"
 dotnet build src/FantasticLogLibrary.sln --configuration $configuration /p:PackageVersion=$nugetVersion /p:AssemblyVersion=$assemblyVer /p:FileVersion=$assemblyFileVer /p:InformationalVersion=$assemblyInformationalVersion
