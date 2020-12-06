@@ -74,5 +74,5 @@ jobs:
     displayName: Perform MQ Analysis
     
     steps:
-      - script: |
+      - powershell: |
           Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
