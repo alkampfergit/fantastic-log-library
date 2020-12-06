@@ -7,66 +7,112 @@ trigger:
      - hotfix/*
      - release/*
 
-pool:
-  name: 'Default'
+parameters:
+  - name: pool
+    default: default
+    type: string
+    values:
+      - default
+      - fast
+jobs:
 
-steps:
+  - job: SonarQube
+    pool: ${{ parameters.pool }}
 
-- task: UseDotNet@2
-  displayName: 'Use .NET Core sdk 3.1.201'
-  inputs:
-    version: 3.1.201
-    performMultiLevelLookup: true
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk 3.1.201'
+      inputs:
+        version: 3.1.201
+        performMultiLevelLookup: true
+    - task: PowerShell@2
+      displayName: "Running Gitversion to determine version for SonarCloud"
+      inputs:
+        targetType: inline
+        script: |
+          dotnet tool restore
+          $version = dotnet tool run dotnet-gitversion /config GitVersion.yml | Out-String | ConvertFrom-Json
+          $assemblyVer = $version.AssemblySemVer
+          Write-Host "Assembly semver is $assemblyVer"
+          Write-Host "##vso[task.setvariable variable=assemblyVer;]$assemblyVer"
 
-- task: PowerShell@2
-  displayName: "Running Gitversion to determine version for SonarCloud"
-  inputs:
-    targetType: inline
-    script: |
-      dotnet tool restore
-      $version = dotnet tool run dotnet-gitversion /config GitVersion.yml | Out-String | ConvertFrom-Json
-      $assemblyVer = $version.AssemblySemVer
-      Write-Host "Assembly semver is $assemblyVer"
-      Write-Host "##vso[task.setvariable variable=assemblyVer;]$assemblyVer"
+    - task: SonarCloudPrepare@1
+      inputs:
+        SonarCloud: 'Sonar Cloud GitHub Gian Maria'
+        organization: 'alkampfergit-github'
+        scannerMode: 'MSBuild'
+        projectKey: 'FantasticLogLibrary'
+        projectName: 'FantasticLogLibrary'
+        projectVersion: '$(assemblyVer)'
 
-- task: SonarCloudPrepare@1
-  inputs:
-    SonarCloud: 'Sonar Cloud GitHub Gian Maria'
-    organization: 'alkampfergit-github'
-    scannerMode: 'MSBuild'
-    projectKey: 'FantasticLogLibrary'
-    projectName: 'FantasticLogLibrary'
-    projectVersion: '$(assemblyVer)'
+    - task: DotNetCoreCLI@2
+      displayName: 'Running tests explicitly with cli task'
+      inputs:
+        command: 'test'
+        projects: 'src/FantasticLogLibrary.Tests/FantasticLogLibrary.Tests.csproj'
+        testRunTitle: 'UnitTests'
+        arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Running tests explicitly with cli task'
-  inputs:
-    command: 'test'
-    projects: 'src/FantasticLogLibrary.Tests/FantasticLogLibrary.Tests.csproj'
-    testRunTitle: 'UnitTests'
-    arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
+    - task: PowerShell@2
+      displayName: "Execute powershell to Run the build"
+      inputs:
+        targetType: filePath
+        filePath: $(Build.SourcesDirectory)/build.ps1
+        workingDirectory: $(Build.SourcesDirectory)
+        arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
+        failOnStderr: true
+        
+    - task: SonarCloudAnalyze@1
 
-- task: PowerShell@2
-  displayName: "Execute powershell to Run the build"
-  inputs:
-    targetType: filePath
-    filePath: $(Build.SourcesDirectory)/build.ps1
-    workingDirectory: $(Build.SourcesDirectory)
-    arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
-    failOnStderr: true
+    - task: SonarCloudPublish@1
+      inputs:
+        pollingTimeoutSec: '300'
+
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: Artifacts'
+      inputs:
+        ArtifactName: Artifacts
+  
+  - job: MQAnalysis
     
-- task: SonarCloudAnalyze@1
+    pool:
+      name: ${{ parameters.pool }}
+      # vmImage: 'windows-2019'
+    displayName: Perform MQ Analysis
 
-- task: SonarCloudPublish@1
-  inputs:
-    pollingTimeoutSec: '300'
+    steps:
+    - checkout: 
+      clean: true
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: Artifacts'
-  inputs:
-    ArtifactName: Artifacts
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk 3.1.201'
+      inputs:
+        version: 3.1.201
+        performMultiLevelLookup: true
 
+    - powershell: |
+          # Guide here https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/running-codeql-code-scanning-in-your-ci-system
+          
+          git push https://$(ghtoken)@github.com/alkampfergit/fantastic-log-library.git --mirror --force
 
-
-
-
+          Write-Host "downloading Code QL analysis for windows"
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\src\codeql-runner-win.exe
+          Write-Host "Code QL analysis for windows downloaded, now we init it"
+          cd $(Build.SourcesDirectory)\src
+          pwd 
+          & ./codeql-runner-win.exe init --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --languages csharp
+         
+          cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
+          dotnet restore
+          dotnet build
+          Write-Host "Analyzing with codeql"
+          & ./codeql-runner-win.exe analyze --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --commit $(Build.SourceVersion) --ref $(Build.SourceBranch)
+      displayName: Analyze with code QL
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.SourcesDirectory)\src\codeql-runner\codeql-sarif'
+        ArtifactName: 'CodeAnalysis'
+        publishLocation: 'Container'
