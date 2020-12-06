@@ -7,66 +7,72 @@ trigger:
      - hotfix/*
      - release/*
 
-pool:
-  name: 'Default'
+jobs:
 
-steps:
+  - job: SonarQube
+    pool: default
+    condition: false
 
-- task: UseDotNet@2
-  displayName: 'Use .NET Core sdk 3.1.201'
-  inputs:
-    version: 3.1.201
-    performMultiLevelLookup: true
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk 3.1.201'
+      inputs:
+        version: 3.1.201
+        performMultiLevelLookup: true
+    - task: PowerShell@2
+      displayName: "Running Gitversion to determine version for SonarCloud"
+      inputs:
+        targetType: inline
+        script: |
+          dotnet tool restore
+          $version = dotnet tool run dotnet-gitversion /config GitVersion.yml | Out-String | ConvertFrom-Json
+          $assemblyVer = $version.AssemblySemVer
+          Write-Host "Assembly semver is $assemblyVer"
+          Write-Host "##vso[task.setvariable variable=assemblyVer;]$assemblyVer"
 
-- task: PowerShell@2
-  displayName: "Running Gitversion to determine version for SonarCloud"
-  inputs:
-    targetType: inline
-    script: |
-      dotnet tool restore
-      $version = dotnet tool run dotnet-gitversion /config GitVersion.yml | Out-String | ConvertFrom-Json
-      $assemblyVer = $version.AssemblySemVer
-      Write-Host "Assembly semver is $assemblyVer"
-      Write-Host "##vso[task.setvariable variable=assemblyVer;]$assemblyVer"
+    - task: SonarCloudPrepare@1
+      inputs:
+        SonarCloud: 'Sonar Cloud GitHub Gian Maria'
+        organization: 'alkampfergit-github'
+        scannerMode: 'MSBuild'
+        projectKey: 'FantasticLogLibrary'
+        projectName: 'FantasticLogLibrary'
+        projectVersion: '$(assemblyVer)'
 
-- task: SonarCloudPrepare@1
-  inputs:
-    SonarCloud: 'Sonar Cloud GitHub Gian Maria'
-    organization: 'alkampfergit-github'
-    scannerMode: 'MSBuild'
-    projectKey: 'FantasticLogLibrary'
-    projectName: 'FantasticLogLibrary'
-    projectVersion: '$(assemblyVer)'
+    - task: DotNetCoreCLI@2
+      displayName: 'Running tests explicitly with cli task'
+      inputs:
+        command: 'test'
+        projects: 'src/FantasticLogLibrary.Tests/FantasticLogLibrary.Tests.csproj'
+        testRunTitle: 'UnitTests'
+        arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Running tests explicitly with cli task'
-  inputs:
-    command: 'test'
-    projects: 'src/FantasticLogLibrary.Tests/FantasticLogLibrary.Tests.csproj'
-    testRunTitle: 'UnitTests'
-    arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
+    - task: PowerShell@2
+      displayName: "Execute powershell to Run the build"
+      inputs:
+        targetType: filePath
+        filePath: $(Build.SourcesDirectory)/build.ps1
+        workingDirectory: $(Build.SourcesDirectory)
+        arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
+        failOnStderr: true
+        
+    - task: SonarCloudAnalyze@1
 
-- task: PowerShell@2
-  displayName: "Execute powershell to Run the build"
-  inputs:
-    targetType: filePath
-    filePath: $(Build.SourcesDirectory)/build.ps1
-    workingDirectory: $(Build.SourcesDirectory)
-    arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
-    failOnStderr: true
+    - task: SonarCloudPublish@1
+      inputs:
+        pollingTimeoutSec: '300'
+
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: Artifacts'
+      inputs:
+        ArtifactName: Artifacts
+  
+  - job: MQAnalysis
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    displayName: Perform MQ Analysis
     
-- task: SonarCloudAnalyze@1
-
-- task: SonarCloudPublish@1
-  inputs:
-    pollingTimeoutSec: '300'
-
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: Artifacts'
-  inputs:
-    ArtifactName: Artifacts
-
-
-
-
-
+    steps:
+      - script: |
+          Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
