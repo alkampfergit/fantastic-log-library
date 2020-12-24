@@ -98,6 +98,7 @@ jobs:
           
     - powershell: |
           cd $(Build.SourcesDirectory)\src
+          cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
           dotnet restore
           dotnet build
       displayName: Build with .NET
