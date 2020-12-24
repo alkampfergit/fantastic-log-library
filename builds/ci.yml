@@ -84,10 +84,12 @@ jobs:
     - powershell: |
           Write-Host "downloading Code QL analysis for windows"
           $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
+          Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\src\codeql-runner-win.exe
           Write-Host "Code QL analysis for windows downloaded, now we init it"
-          & $(Build.SourcesDirectory)\codeql-runner-win.exe init 
-      displayName: 'Download MQ analysis'
+          cd $(Build.SourcesDirectory)\src
+          & codeql-runner-win.exe init --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --languages csharp
+          cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
+      displayName: 'Download MQ analysis and init'
           
     - task: PowerShell@2
       displayName: "Execute powershell to Run the build"
@@ -97,3 +99,8 @@ jobs:
         workingDirectory: $(Build.SourcesDirectory)
         arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
         failOnStderr: true
+    
+    - powershell: |
+          Write-Host "Analyzing with codeql"
+          cd $(Build.SourcesDirectory)\src
+          & codeql-runner-win.exe analyze --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --commit $(Build.SourceVersion) --ref $(Build.SourceBranch)
