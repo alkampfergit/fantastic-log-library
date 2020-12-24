@@ -72,7 +72,23 @@ jobs:
     pool:
       vmImage: 'windows-2019'
     displayName: Perform MQ Analysis
-    
+
     steps:
-      - powershell: |
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk 3.1.201'
+      inputs:
+        version: 3.1.201
+        performMultiLevelLookup: true
+        
+    - task: PowerShell@2
+      displayName: "Execute powershell to Run the build"
+      inputs:
+        targetType: filePath
+        filePath: $(Build.SourcesDirectory)/build.ps1
+        workingDirectory: $(Build.SourcesDirectory)
+        arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
+        failOnStderr: true
+
+    - powershell: |
           Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
