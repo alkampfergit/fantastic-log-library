@@ -82,6 +82,7 @@ jobs:
         performMultiLevelLookup: true
 
     - powershell: |
+          # Guide here https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/running-codeql-code-scanning-in-your-ci-system
           Write-Host "downloading Code QL analysis for windows"
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\src\codeql-runner-win.exe
