@@ -89,7 +89,7 @@ jobs:
           Write-Host "Code QL analysis for windows downloaded, now we init it"
           cd $(Build.SourcesDirectory)\src
           pwd 
-          & codeql-runner-win.exe init --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --languages csharp
+          & ./codeql-runner-win.exe init --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --languages csharp
           cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
       displayName: 'Download MQ analysis and init'
           
@@ -105,4 +105,4 @@ jobs:
     - powershell: |
           Write-Host "Analyzing with codeql"
           cd $(Build.SourcesDirectory)\src
-          & codeql-runner-win.exe analyze --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --commit $(Build.SourceVersion) --ref $(Build.SourceBranch)
+          & ./codeql-runner-win.exe analyze --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --commit $(Build.SourceVersion) --ref $(Build.SourceBranch)
