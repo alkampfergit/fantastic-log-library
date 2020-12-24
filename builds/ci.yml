@@ -96,16 +96,19 @@ jobs:
           cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
       displayName: 'Download MQ analysis and init'
           
-    - task: PowerShell@2
-      displayName: "Execute powershell to Run the build"
-      inputs:
-        targetType: filePath
-        filePath: $(Build.SourcesDirectory)/build.ps1
-        workingDirectory: $(Build.SourcesDirectory)
-        arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
-        failOnStderr: true
+    - powershell: |
+          cd $(Build.SourcesDirectory)\src
+          dotnet restore
+          dotnet build
     
     - powershell: |
           Write-Host "Analyzing with codeql"
           cd $(Build.SourcesDirectory)\src
           & ./codeql-runner-win.exe analyze --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --commit $(Build.SourceVersion) --ref $(Build.SourceBranch)
+      displayName: Analyze with code QL
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.SourcesDirectory)\srccodeql-runner\codeql-sarif)'
+        ArtifactName: 'CodeAnalysis'
+        publishLocation: 'Container'
