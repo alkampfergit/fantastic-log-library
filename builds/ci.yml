@@ -93,17 +93,10 @@ jobs:
           cd $(Build.SourcesDirectory)\src
           pwd 
           & ./codeql-runner-win.exe init --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --languages csharp
-          cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
-      displayName: 'Download MQ analysis and init'
-          
-    - powershell: |
-          cd $(Build.SourcesDirectory)\src
+         
           cat $(Build.SourcesDirectory)\src\codeql-runner\codeql-env.sh | Invoke-Expression
           dotnet restore
           dotnet build
-      displayName: Build with .NET
-    
-    - powershell: |
           Write-Host "Analyzing with codeql"
           cd $(Build.SourcesDirectory)\src
           & ./codeql-runner-win.exe analyze --github-url https://github.com --repository alkampfergit/fantastic-log-library --github-auth $(ghtoken) --commit $(Build.SourceVersion) --ref $(Build.SourceBranch)
