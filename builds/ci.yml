@@ -80,7 +80,14 @@ jobs:
       inputs:
         version: 3.1.201
         performMultiLevelLookup: true
-        
+
+    - powershell: |
+          Write-Host "downloading Code QL analysis for windows"
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
+          Write-Host "Code QL analysis for windows downloaded"
+      displayName: 'Perform MQ analysis'
+          
     - task: PowerShell@2
       displayName: "Execute powershell to Run the build"
       inputs:
@@ -89,6 +96,3 @@ jobs:
         workingDirectory: $(Build.SourcesDirectory)
         arguments: -outFolder $(Build.ArtifactStagingDirectory) -skipTests $true -configuration $(BuildConfiguration) -pipelineName FantasticLogLibraryCi
         failOnStderr: true
-
-    - powershell: |
-          Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
