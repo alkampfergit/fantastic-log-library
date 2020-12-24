@@ -104,6 +104,6 @@ jobs:
     
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: '$(Build.SourcesDirectory)\src\srccodeql-runner\codeql-sarif'
+        PathtoPublish: '$(Build.SourcesDirectory)\src\codeql-runner\codeql-sarif'
         ArtifactName: 'CodeAnalysis'
         publishLocation: 'Container'
