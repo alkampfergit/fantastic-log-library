@@ -85,8 +85,9 @@ jobs:
           Write-Host "downloading Code QL analysis for windows"
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-runner-win.exe -OutFile $(Build.SourcesDirectory)\codeql-runner-win.exe
-          Write-Host "Code QL analysis for windows downloaded"
-      displayName: 'Perform MQ analysis'
+          Write-Host "Code QL analysis for windows downloaded, now we init it"
+          & $(Build.SourcesDirectory)\codeql-runner-win.exe init 
+      displayName: 'Download MQ analysis'
           
     - task: PowerShell@2
       displayName: "Execute powershell to Run the build"
