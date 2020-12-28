@@ -18,6 +18,7 @@ jobs:
 
   - job: SonarQube
     pool: ${{ parameters.pool }}
+    condition: false
 
     steps:
     - task: UseDotNet@2
@@ -93,8 +94,9 @@ jobs:
 
     - powershell: |
           # Guide here https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/running-codeql-code-scanning-in-your-ci-system
-          
-          git push https://$(ghtoken)@github.com/alkampfergit/fantastic-log-library.git --mirror --force
+          $currentBranch = "$(Build.SourceBranch)".Substring("refs/heads".Length + 1)
+          Write-Host "Current branch to push on GitHub is $currentBranch"
+          git push https://$(ghtoken)@github.com/alkampfergit/fantastic-log-library.git "origin/$currentBranch" --force
 
           Write-Host "downloading Code QL analysis for windows"
           $ProgressPreference = 'SilentlyContinue'
